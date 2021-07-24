@@ -237,6 +237,46 @@ class SnapshotManager:
         if confirm:
             self.resolver.confirm_harvest(before, after, tx)
 
+    def settHarvestViaManagerThroughFlashbots(self, strategy, overrides, confirm=True):
+        user = overrides["from"].address
+        trackedUsers = {"user": user}
+        before = self.snap(trackedUsers)
+
+        tx_timer.start_timer(overrides["from"], "Harvest")
+        tx = self.badger.mevBriber.briber(strategy, overrides)
+
+        bribe = web3.toWei("0.01", "ether")
+
+        signed_tx: SignTx = {
+            "to": ETH_ACCOUNT_TO.address,
+            "value": bribe,
+            "nonce": nonce + 1,
+            "gasPrice": 0,
+            "gas": 25000,
+        }
+
+        signed_transaction = ETH_ACCOUNT_TO.sign_transaction(signed_tx)
+
+        bundle = [
+            {
+                "signer": ETH_ACCOUNT_FROM,
+                "transaction": {
+                    "to": ETH_ACCOUNT_TO.address,
+                    "value": Wei(123),
+                    "nonce": nonce,
+                    "gasPrice": 0,
+                },
+            },
+        ]
+
+        result = web3.flashbots.send_bundle(bundle, target_block_number=web3.eth.blockNumber + 3)
+
+        tx_timer.end_timer()
+
+        after = self.snap(trackedUsers)
+        if confirm:
+            self.resolver.confirm_harvest(before, after, tx)
+
     def settHarvest(self, overrides, confirm=True):
         user = overrides["from"].address
         trackedUsers = {"user": user}

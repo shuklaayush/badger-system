@@ -89,6 +89,7 @@ vvm==0.1.0
 vyper==0.2.12
 wcwidth==0.2.5
 web3==5.18.0
+git+https://github.com/shuklaayush/web3-flashbots.git@master
 websockets==8.1
 yarl==1.6.3
 matplotlib==3.4.2
