@@ -47,6 +47,7 @@ contract StrategyBadgerLpMetaFarm is BaseStrategyMultiSwapper {
         uint256 blockNumber
     );
 
+    uint256 private constant MAX_SWAPS = 3; // Memory arrays are fixed size in solidity
     struct HarvestData {
         uint256 badgerHarvested;
         uint256 totalBadger;
@@ -54,6 +55,11 @@ contract StrategyBadgerLpMetaFarm is BaseStrategyMultiSwapper {
         uint256 wbtcFromConversion;
         uint256 lpGained;
         uint256 lpDeposited;
+        // Swapped tokens
+        address[MAX_SWAPS] swappedTokenAddressesIn;
+        address[MAX_SWAPS] swappedTokenAddressesOut;
+        uint256[MAX_SWAPS] swappedTokenAmountsIn;
+        uint256[MAX_SWAPS] swappedTokenAmountsOut;
     }
 
     function initialize(
@@ -153,7 +159,15 @@ contract StrategyBadgerLpMetaFarm is BaseStrategyMultiSwapper {
                 path[0] = badger; // Badger
                 path[1] = wbtc;
 
+                // TODO: Maybe make swap return amount received from swap
+                uint256 _beforeWbtc = IERC20Upgradeable(wbtc).balanceOf(address(this));
                 _swap(badger, harvestData.badgerConvertedToWbtc, path);
+                uint256 _afterWbtc = IERC20Upgradeable(wbtc).balanceOf(address(this));
+
+                harvestData.swappedTokenAddressesIn[0] = badger;
+                harvestData.swappedTokenAddressesOut[0] = wbtc;
+                harvestData.swappedTokenAmountsIn[0] = harvestData.badgerConvertedToWbtc;
+                harvestData.swappedTokenAmountsOut[0] = _afterWbtc.sub(_beforeWbtc);
 
                 // Add Badger and wBTC as liquidity if any to add
                 _add_max_liquidity_uniswap(badger, wbtc);

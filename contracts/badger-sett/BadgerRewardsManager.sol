@@ -144,7 +144,7 @@ contract BadgerRewardsManager is AccessControlUpgradeable, ReentrancyGuardUpgrad
         _onlyKeeper();
         _onlyApprovedStrategies(strategy);
 
-        IStrategy(strategy).harvest();
+        return IStrategy(strategy).harvest();
     }
 
     // ===== Permissioned Functions: Swapper =====

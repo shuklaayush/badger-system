@@ -246,7 +246,7 @@ contract BadgerTreeV2 is Initializable, AccessControlUpgradeable, ICumulativeMul
     function _setClaimed(
         address token,
         address account,
-        unit256 amount
+        uint256 amount
     ) internal {
         claimed[account][token] = claimed[account][token].add(amount);
     }
