@@ -35,6 +35,10 @@ from helpers.sett.strategy_earnings import (
     get_tend_earnings,
     get_tend_earnings_manager,
 )
+from helpers.flashbots_utils import (
+    estimate_briber_gas_cost,
+    get_harvest_swap_expected,
+)
 from helpers.tx_timer import tx_timer
 from helpers.gas_utils import gas_strategies
 
@@ -242,35 +246,34 @@ class SnapshotManager:
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
 
+        swap_data = get_harvest_swap_expected(strategy, overrides)
+
         tx_timer.start_timer(overrides["from"], "Harvest")
-        tx = self.badger.mevBriber.briber(strategy, overrides)
+        # Create transaction data
+        tx = self.badger.mevBriber.functions.privateHarvest(
+            strategy,
+            swap_data["tokensIn"],
+            swap_data["tokensOut"],
+            str(
+                int(1e18 * swap_data["minPrices"])
+            ),  # TODO: Check if the format is fine
+        ).buildTransaction(overrides)
 
-        bribe = web3.toWei("0.01", "ether")
+        signed_tx = overrides["from"].sign_transaction(tx)
 
-        signed_tx: SignTx = {
-            "to": ETH_ACCOUNT_TO.address,
-            "value": bribe,
-            "nonce": nonce + 1,
-            "gasPrice": 0,
-            "gas": 25000,
-        }
-
-        signed_transaction = ETH_ACCOUNT_TO.sign_transaction(signed_tx)
-
+        # Create flashbots bundle
         bundle = [
-            {
-                "signer": ETH_ACCOUNT_FROM,
-                "transaction": {
-                    "to": ETH_ACCOUNT_TO.address,
-                    "value": Wei(123),
-                    "nonce": nonce,
-                    "gasPrice": 0,
-                },
-            },
+            {"signed_transaction": signed_tx.rawTransaction},
         ]
 
-        result = web3.flashbots.send_bundle(bundle, target_block_number=web3.eth.blockNumber + 3)
-
+        # Flashbots bundles target a specific block
+        block_number = web3.eth.blockNumber + 3
+        result = web3.flashbots.send_bundle(bundle, target_block_number=block_number)
+        console.log(
+            "bundle broadcasted at block:",
+            block_number,
+        )
+        result.wait()
         tx_timer.end_timer()
 
         after = self.snap(trackedUsers)
@@ -390,6 +393,38 @@ class SnapshotManager:
                 "expected profits",
                 profit,
             )
+            return profit
+        except:
+            print("profit estimation failed")
+            return min_profit
+
+    def estimateProfitHarvestViaManagerThroughFlashbots(
+        self, key, strategy, overrides, min_profit, miner_tip=0
+    ):
+        try:
+            assert miner_tip >= 0
+
+            gas_cost = web3.fromWei(
+                estimate_briber_gas_cost(self.badger, strategy, overrides), "ether"
+            )
+            bribe = miner_tip + gas_cost
+
+            earnings = get_harvest_earnings(self.strategy, key, overrides)
+            if earnings == "skip":
+                return min_profit
+
+            profit = decimal.Decimal(earnings) - bribe
+            console.log(
+                "expected gas cost:",
+                gas_cost,
+                "miner tip:",
+                miner_tip,
+                "expected earnings:",
+                earnings,
+                "expected profits",
+                profit,
+            )
+
             return profit
         except:
             print("profit estimation failed")
