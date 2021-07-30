@@ -140,7 +140,7 @@ contract BadgerRewardsManager is AccessControlUpgradeable, ReentrancyGuardUpgrad
         IStrategy(strategy).tend();
     }
 
-    function harvest(address strategy) external {
+    function harvest(address strategy) external returns (uint256) {
         _onlyKeeper();
         _onlyApprovedStrategies(strategy);
 

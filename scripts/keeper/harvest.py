@@ -16,7 +16,6 @@ def harvest_all(badger: BadgerSystem, skip, min_profit=0):
     """
     Runs harvest function for strategies if they are expected to be profitable.
     If a profit estimate fails for any reason the default behavior is to treat it as having a profit of zero.
-
     :param badger: badger system
     :param skip: strategies to skip checking
     :param min_profit: minimum estimated profit (in ETH or BNB) required for harvest to be executed on chain
@@ -36,13 +35,13 @@ def harvest_all(badger: BadgerSystem, skip, min_profit=0):
 
         before = snap.snap()
         if strategy.keeper() == badger.badgerRewardsManager:
-            keeper = accounts.at(strategy.keeper())
-            estimated_profit = snap.estimateProfitHarvestViaManager(
-                key,
-                strategy,
-                {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
-                min_profit,
-            )
+            keeper = badger.harvester # Use the harvester account if we have the choice
+            # estimated_profit = snap.estimateProfitHarvestViaManager(
+            #     key,
+            #     strategy,
+            #     {"from": keeper, "gas_limit": 2000000, "allow_revert": True}
+            # )
+            estimated_profit = 1
             if estimated_profit >= min_profit:
                 snap.settHarvestViaManager(
                     strategy,
@@ -50,11 +49,12 @@ def harvest_all(badger: BadgerSystem, skip, min_profit=0):
                     confirm=False,
                 )
         else:
-            estimated_profit = snap.estimateProfitHarvest(
-                key,
-                {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
-                min_profit,
-            )
+            keeper = accounts.at(strategy.keeper())
+            # estimated_profit = snap.estimateProfitHarvest(
+            #     key,
+            #     {"from": keeper, "gas_limit": 2000000, "allow_revert": True}
+            # )
+            estimated_profit = 1
             if estimated_profit >= min_profit:
                 snap.settHarvest(
                     {"from": keeper, "gas_limit": 2000000, "allow_revert": True},

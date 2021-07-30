@@ -53,16 +53,17 @@ def harvest_all(badger: BadgerSystem, skip, min_profit=0):
 
         before = snap.snap()
         if strategy.keeper() == badger.badgerRewardsManager:
-            # TODO: This should be keeper of BadgerRewardsManager
-            keeper = accounts.at(strategy.keeper())
-            # TODO: Why pass key/strategy if SnapshotManager has self.strategy?
-            estimated_profit = snap.estimateProfitHarvestViaManagerThroughFlashbots(
-                key,
-                strategy,
-                {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
-                min_profit,
-                web3.fromWei(miner_tip, "ether"),
-            )
+            keeper = badger.harvester # Use the harvester account if we have the choice
+
+            ## TODO: Why pass key/strategy if SnapshotManager has self.strategy?
+            # estimated_profit = snap.estimateProfitHarvestViaManagerThroughFlashbots(
+            #     key,
+            #     strategy,
+            #     {"from": keeper, "gas_limit": 2000000, "allow_revert": True},
+            #     min_profit,
+            #     web3.fromWei(miner_tip, "ether"),
+            # )
+            estimated_profit = 1
             if estimated_profit >= min_profit:
                 gas_cost = estimate_briber_gas_cost(badger, strategy)
                 bribe = miner_tip + gas_cost

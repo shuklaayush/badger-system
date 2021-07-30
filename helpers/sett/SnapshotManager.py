@@ -246,17 +246,17 @@ class SnapshotManager:
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
 
-        swap_data = get_harvest_swap_expected(strategy, overrides)
+        # swap_data = get_harvest_swap_expected(strategy, overrides)
 
         tx_timer.start_timer(overrides["from"], "Harvest")
         # Create transaction data
         tx = self.badger.mevBriber.functions.privateHarvest(
             strategy,
-            swap_data["tokensIn"],
-            swap_data["tokensOut"],
-            str(
-                int(1e18 * swap_data["minPrices"])
-            ),  # TODO: Check if the format is fine
+            # swap_data["tokensIn"],
+            # swap_data["tokensOut"],
+            # str(
+            #     int(1e18 * swap_data["minPrices"])
+            # ),  # TODO: Check if the format is fine
         ).buildTransaction(overrides)
 
         signed_tx = overrides["from"].sign_transaction(tx)
@@ -267,7 +267,7 @@ class SnapshotManager:
         ]
 
         # Flashbots bundles target a specific block
-        block_number = web3.eth.blockNumber + 3
+        block_number = web3.eth.blockNumber + 1
         result = web3.flashbots.send_bundle(bundle, target_block_number=block_number)
         console.log(
             "bundle broadcasted at block:",
@@ -409,7 +409,7 @@ class SnapshotManager:
             )
             bribe = miner_tip + gas_cost
 
-            earnings = get_harvest_earnings(self.strategy, key, overrides)
+            earnings = get_harvest_earnings(self.strategy, key, overrides) # Requires BADGER-WBTC price
             if earnings == "skip":
                 return min_profit
 

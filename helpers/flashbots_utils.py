@@ -89,13 +89,5 @@ def estimate_briber_gas_cost(badger: BadgerSystem, strategy, overrides):
     """
     Estimate gas cost for calling harvest through briber.
     """
-    harvest_data = strategy.harvest.call(overrides)
-
-    tokens_in = harvest_data.swappedTokenAddressesIn
-    tokens_out = harvest_data.swappedTokenAddressesOut
-    min_prices = [0] * len(tokens_in)
-
-    gas_estimate = badger.mevBriber.privateHarvest.estimate_gas(
-        strategy, tokens_in, tokens_out, min_prices, overrides
-    )
+    gas_estimate = badger.mevBriber.privateHarvest.estimate_gas(strategy, 0, overrides)
     return gas_strategies.gas_cost(gas_estimate)
