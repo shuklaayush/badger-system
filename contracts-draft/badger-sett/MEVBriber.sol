@@ -2,11 +2,14 @@
 
 pragma solidity ^0.6.0;
 
+// import "deps/@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "deps/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "interfaces/badger/IBadgerRewardsManager.sol";
 
 contract MEVBriber is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
+    // using SafeMathUpgradeable for uint256;
     IBadgerRewardsManager rewardsManager;
+    bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
 
     function initialize(
         address admin,
@@ -38,7 +41,7 @@ contract MEVBriber is AccessControlUpgradeable, ReentrancyGuardUpgradeable {
         require(harvested >= minHarvest, "Want harvested is too low");
 
         // Ref: https://docs.flashbots.net/flashbots-auction/searchers/advanced/coinbase-payment/#managing-payments-to-coinbaseaddress-when-it-is-a-contract
-        block.coinbase.call{value: msg.value}();
+        block.coinbase.call{value: msg.value}(new bytes(0));
         // block.coinbase.transfer(msg.value);
     }
 }

@@ -37,7 +37,7 @@ from helpers.sett.strategy_earnings import (
 )
 from helpers.flashbots_utils import (
     estimate_briber_gas_cost,
-    get_harvest_swap_expected,
+    get_min_expected_harvest,
 )
 from helpers.tx_timer import tx_timer
 from helpers.gas_utils import gas_strategies
@@ -246,17 +246,13 @@ class SnapshotManager:
         trackedUsers = {"user": user}
         before = self.snap(trackedUsers)
 
-        # swap_data = get_harvest_swap_expected(strategy, overrides)
+        min_harvested = get_min_expected_harvest(strategy, overrides)
 
         tx_timer.start_timer(overrides["from"], "Harvest")
         # Create transaction data
         tx = self.badger.mevBriber.functions.privateHarvest(
             strategy,
-            # swap_data["tokensIn"],
-            # swap_data["tokensOut"],
-            # str(
-            #     int(1e18 * swap_data["minPrices"])
-            # ),  # TODO: Check if the format is fine
+            min_harvested,
         ).buildTransaction(overrides)
 
         signed_tx = overrides["from"].sign_transaction(tx)
