@@ -169,7 +169,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
         if (stakedCvxCrv > 0) {
             cvxCrvRewardsPool.withdraw(stakedCvxCrv, true);
         }
-        
+
         // 2. Swap cvxCRV tokens to CVX
         uint256 cvxCrvBalance = cvxCrvToken.balanceOf(address(this));
 
@@ -186,7 +186,7 @@ contract StrategyCvxHelper is BaseStrategy, CurveSwapper, UniswapSwapper, TokenS
             cvxRewardsPool.stake(cvxToken.balanceOf(address(this)));
         }
 
-        emit Tend(cvxHarvested);
+        emit Harvest(cvxHarvested);
         return cvxHarvested;
     }
 }

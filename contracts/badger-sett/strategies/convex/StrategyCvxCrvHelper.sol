@@ -214,7 +214,7 @@ contract StrategyCvxCrvHelper is BaseStrategy, CurveSwapper, UniswapSwapper, Tok
             cvxCrvRewardsPool.stake(cvxCrvToken.balanceOf(address(this)));
         }
 
-        emit Tend(cvxCrvHarvested);
+        emit Harvest(cvxCrvHarvested);
         return cvxCrvHarvested;
     }
 }
