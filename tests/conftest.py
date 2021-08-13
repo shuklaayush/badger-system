@@ -67,7 +67,7 @@ settsToRun = [
     # "native.sbtcCrv",
     # "native.tbtcCrv",
     # "harvest.renCrv",
-    # "native.uniBadgerWbtc",
+    "native.uniBadgerWbtc",
     # "native.sushiBadgerWbtc",
     # "native.sushiWbtcEth",
     # "native.sushiWbtcIbBtc",

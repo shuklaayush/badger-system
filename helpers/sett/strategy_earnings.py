@@ -95,7 +95,7 @@ def get_harvest_earnings(strategy: Contract, key: str, overrides):
         crv_gauge = Contract.from_explorer(strategy.gauge())
         earnings = crv_gauge.claimable_tokens.call(strategy.address, overrides)
 
-    elif is_xsushi_strategy(key) or is_pancake_strategy(key):
+    elif is_xsushi_strategy(key) or is_pancake_strategy(key) or is_badger_strategy(key):
         harvest_data = strategy.harvest.call(overrides)
         earnings = harvest_data[0]
 
@@ -108,22 +108,24 @@ def get_harvest_earnings(strategy: Contract, key: str, overrides):
     return calc_profit(earnings, token_address, token)
 
 
-def get_price(token: str, sellAmount=1000000000000000000):
+def get_price(token: str, buyToken: str = None, sellAmount=1000000000000000000):
     """
     get_price uses the 0x api to get the most accurate eth price for the token
 
     :param token: token ticker or token address
-    :param buyToken: token to denominate price in, default is WETH
+    :param buyToken: token to denominate price in, default is WETH/WBNB
     :param sellAmount: token amount to sell in base unit, default is 1e18
-    :return: eth/bnb price per token for the specified amount to sell
+    :return: buyToken price per sellToken for the specified amount to sell
     """
 
     if curr_network == "bsc" or curr_network == "bsc-fork":
         endpoint = "https://bsc.api.0x.org/"
-        buyToken = "WBNB"
+        if buyToken is None:
+            buyToken = "WBNB"
     elif curr_network == "eth":
         endpoint = "https://api.0x.org/"
-        buyToken = "WETH"
+        if buyToken is None:
+            buyToken = "WETH"
     else:
         raise ValueError("Unrecognized network")
 

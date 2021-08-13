@@ -35,6 +35,10 @@ from helpers.sett.strategy_earnings import (
     get_tend_earnings,
     get_tend_earnings_manager,
 )
+from helpers.flashbots_utils import (
+    estimate_briber_gas_cost,
+    get_min_expected_harvest,
+)
 from helpers.tx_timer import tx_timer
 from helpers.gas_utils import gas_strategies
 
@@ -237,6 +241,41 @@ class SnapshotManager:
         if confirm:
             self.resolver.confirm_harvest(before, after, tx)
 
+    def settHarvestViaManagerThroughFlashbots(self, strategy, overrides, confirm=True):
+        user = overrides["from"].address
+        trackedUsers = {"user": user}
+        before = self.snap(trackedUsers)
+
+        min_harvested = get_min_expected_harvest(strategy, overrides)
+
+        tx_timer.start_timer(overrides["from"], "Harvest")
+        # Create transaction data
+        tx = self.badger.mevBriber.functions.privateHarvest(
+            strategy,
+            min_harvested,
+        ).buildTransaction(overrides)
+
+        signed_tx = overrides["from"].sign_transaction(tx)
+
+        # Create flashbots bundle
+        bundle = [
+            {"signed_transaction": signed_tx.rawTransaction},
+        ]
+
+        # Flashbots bundles target a specific block
+        block_number = web3.eth.blockNumber + 1
+        result = web3.flashbots.send_bundle(bundle, target_block_number=block_number)
+        console.log(
+            "bundle broadcasted at block:",
+            block_number,
+        )
+        result.wait()
+        tx_timer.end_timer()
+
+        after = self.snap(trackedUsers)
+        if confirm:
+            self.resolver.confirm_harvest(before, after, tx)
+
     def settHarvest(self, overrides, confirm=True):
         user = overrides["from"].address
         trackedUsers = {"user": user}
@@ -350,6 +389,38 @@ class SnapshotManager:
                 "expected profits",
                 profit,
             )
+            return profit
+        except:
+            print("profit estimation failed")
+            return min_profit
+
+    def estimateProfitHarvestViaManagerThroughFlashbots(
+        self, key, strategy, overrides, min_profit, miner_tip=0
+    ):
+        try:
+            assert miner_tip >= 0
+
+            gas_cost = web3.fromWei(
+                estimate_briber_gas_cost(self.badger, strategy, overrides), "ether"
+            )
+            bribe = miner_tip + gas_cost
+
+            earnings = get_harvest_earnings(self.strategy, key, overrides) # Requires BADGER-WBTC price
+            if earnings == "skip":
+                return min_profit
+
+            profit = decimal.Decimal(earnings) - bribe
+            console.log(
+                "expected gas cost:",
+                gas_cost,
+                "miner tip:",
+                miner_tip,
+                "expected earnings:",
+                earnings,
+                "expected profits",
+                profit,
+            )
+
             return profit
         except:
             print("profit estimation failed")

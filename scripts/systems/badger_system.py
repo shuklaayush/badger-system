@@ -260,6 +260,8 @@ def connect_badger(
         badger.connect_governance_timelock(badger_deploy["timelock"])
     if "badgerRewardsManager" in badger_deploy:
         badger.connect_rewards_manager(badger_deploy["badgerRewardsManager"])
+    if "mevBriber" in badger_deploy:
+        badger.connect_mev_briber(badger_deploy["mevBriber"])
     if "unlockScheduler" in badger_deploy:
         badger.connect_unlock_scheduler(badger_deploy["unlockScheduler"])
     if "rewardsLogger" in badger_deploy:
@@ -1350,6 +1352,10 @@ class BadgerSystem:
         self.track_contract_upgradeable(
             "badgerRewardsManager", self.badgerRewardsManager
         )
+
+    def connect_mev_briber(self, address):
+        self.mevBriber = MEVBriber.at(address)
+        self.track_contract_upgradeable("mevBriber", self.mevBriber)
 
     def connect_unlock_scheduler(self, address):
         self.unlockScheduler = UnlockScheduler.at(address)
